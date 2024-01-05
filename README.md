@@ -8,8 +8,9 @@ Repository with multiplier test generator by circuits
 ## Additional used apps:
 1. Aigtoaig from https://github.com/arminbiere/aiger
 2. Transalg from https://gitlab.com/transalg/transalg/-/tree/cmake?ref_type=heads
+3. SAT solver kissat from https://github.com/arminbiere/kissat
 
-Both binaries should be located in the ./Apps/ folder.
+All binaries should be located in the ./Apps/ folder.
 
 ## Usage
 For inversion problem:
