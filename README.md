@@ -6,16 +6,21 @@ Repository with multiplier test generator by circuits
 2. Aag + aag -> LEC CNF.
 
 Additional used apps:
-Aigtoaig from https://github.com/arminbiere/aiger
-Transalg from https://gitlab.com/transalg/transalg/-/tree/cmake?ref_type=heads
+1. Aigtoaig from https://github.com/arminbiere/aiger
+2. Transalg from https://gitlab.com/transalg/transalg/-/tree/cmake?ref_type=heads
 Both binaries should be located in the ./Apps/ folder.
 
-Usage.
+# Usage
 For inversion problem:
+
 ./Multipliers/create_tests.sh N M
+
 where N is the size of the first integer in bytes, M is the size of the second integer in bytes.
 
 For LEC problem:
+
 ./Multipliers_LEC/create_lec_tests.sh N M
+
 where N is the size of the first integer in bytes, M is the size of the second integer in bytes.
+
 To create a LEC problem, both source aags must be pre-created and located in ./Multipliers/aags/ .
