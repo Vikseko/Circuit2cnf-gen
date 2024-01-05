@@ -13,17 +13,17 @@ Repository with multiplier test generator by circuits
 All binaries should be located in the ./Apps/ folder.
 
 ## Usage
-### For inversion problem: 
+### For inversion problem
 
-inside ./Multipliers/ directory
+Inside ./Multipliers/ directory:
 
 > ./create_tests.sh N M
 
 where N is the size of the first integer in bytes, M is the size of the second integer in bytes.
 
-### For LEC problem:
+### For LEC problem
 
-inside ./Multipliers_LEC/ directory
+Inside ./Multipliers_LEC/ directory:
 
 > ./create_lec_tests.sh N M
 
