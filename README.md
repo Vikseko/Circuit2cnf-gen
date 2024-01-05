@@ -1,7 +1,7 @@
-# Circuit2cnf-mults-gen
-CNF generator encoding LEC and inversion problems for multipliers.
+# Circuit2cnf-gen
+CNF generator encoding LEC and inversion problems (for multipliers by now).
 
-Repository with multiplier test generator by circuits 
+CNF generation follows one of two schemes:
 1. TA-program -> aag/aig -> CNF for multiplier inversion problem (with output corresponding to random input);
 2. Aag + aag -> LEC CNF.
 
