@@ -56,7 +56,7 @@ if __name__ == '__main__':
 	os.remove('mult_.alg')
 	print('AAG was saved to', outaagfile)
 	print('--------------------------------------------------')
-	aigtoaigparams = ['../Apps/aiger/aigtoaig']
+	aigtoaigparams = ['../Apps/aigtoaig']
 	aigtoaigparams.append(outaagfile)
 	aigtoaigparams.append(outaigfile)
 	aigtoaig = subprocess.run(aigtoaigparams, capture_output=True, text=True)
