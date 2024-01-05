@@ -14,6 +14,7 @@ All binaries should be located in the ./Apps/ folder.
 
 ## Usage
 For inversion problem: 
+
 inside ./Multipliers/ directory
 
 > ./create_tests.sh N M
@@ -21,6 +22,7 @@ inside ./Multipliers/ directory
 where N is the size of the first integer in bytes, M is the size of the second integer in bytes.
 
 For LEC problem:
+
 inside ./Multipliers_LEC/ directory
 
 > ./create_lec_tests.sh N M
