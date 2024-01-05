@@ -1,8 +1,8 @@
 # Circuit2cnf-gen
-CNF generator encoding LEC and inversion problems (for multipliers by now).
+CNF generator encoding LEC and inversion problems (for multipliers and summators by now).
 
 CNF generation follows one of two schemes:
-1. TA-program -> aag/aig -> CNF for multiplier inversion problem (with output corresponding to random input);
+1. TA-program -> aag/aig -> CNF for inversion problem (with output corresponding to random input);
 2. Aag + aag -> LEC CNF.
 
 ## Additional used apps:
@@ -15,7 +15,7 @@ All binaries should be located in the ./Apps/ folder.
 ## Usage
 ### For inversion problem
 
-Inside ./Multipliers/ directory:
+Inside ./Multipliers/ or ./Summators/ directory:
 
 > ./create_tests.sh N M
 
@@ -23,10 +23,10 @@ where N is the size of the first integer in bytes, M is the size of the second i
 
 ### For LEC problem
 
-Inside ./Multipliers_LEC/ directory:
+Inside ./Multipliers_LEC/ or ./Summators_LEC/ directory:
 
 > ./create_lec_tests.sh N M
 
 where N is the size of the first integer in bytes, M is the size of the second integer in bytes.
 
-To create a LEC problem, both source aags must be pre-created and located in ./Multipliers/aags/ .
+To create a LEC problem, both source aags must be pre-created and located in ./*problemtype*/aags/ (*problemtype* is "Summators" or "Multipliers").
