@@ -1,0 +1,16 @@
+# В этом файле можно оставлять комментарии
+# Имя файла .gitignore
+# Файл нужно создать самостоятельно
+
+# Каждая строчка — это шаблон, по которому происходит игнорирование
+/**/*.cnf
+/Multipliers/aags/*
+/Multipliers/aigs/*
+/Multipliers/cnfs/*
+/Multipliers_LEC/cnfs/*
+/Multipliers_LEC/*.alg
+/Summators/aags/*
+/Summators/aigs/*
+/Summators/cnfs/*
+/Summators_LEC/cnfs/*
+/Summators_LEC/*.alg
