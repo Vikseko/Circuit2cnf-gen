@@ -141,7 +141,15 @@ def encode_AND_gate(line, var_map, circuit_flag = False):
     var_outp = var_map[gate_outp]
     var_input1 = var_map[gate_input1]
     var_input2 = var_map[gate_input2]
-  clauses.extend([[var_outp, -var_input1, -var_input2], [-var_outp, var_input1], [-var_outp, var_input2]])
+  clause1 = [var_outp, -var_input1, -var_input2]
+  clause2 = [-var_outp, var_input1]
+  clause3 = [-var_outp, var_input2]
+  if len(clause1) == len(set([abs(x) for x in clause1])):
+    clauses.append(clause1)
+  if len(clause2) == len(set([abs(x) for x in clause2])):
+    clauses.append(clause2)
+  if len(clause3) == len(set([abs(x) for x in clause3])):
+    clauses.append(clause3)
   return clauses
 
 def solve_CNF_timelim(cnf, timelimit):
@@ -189,7 +197,8 @@ def aig2bench(filename):
         not_gates[not_tuple] = 1
     del aig_file_lines[0] 
 
-  const_equals = []
+  const_false = False
+  const_true = False
   and_gates = []
   for line in aig_file_lines:
     if line[0].isdigit():
@@ -204,16 +213,19 @@ def aig2bench(filename):
         not_tuple = (second_input,second_input-1)
         if not_tuple not in not_gates:
           not_gates[not_tuple] = 1
-      if first_input == 0:
-        const_equals.append((and_gate_name,second_input))
-        continue
-      if second_input == 0:
-        const_equals.append((and_gate_name,first_input))
-        continue
-      and_tuple = (and_gate_name,first_input,second_input)
+      if first_input == 0 or second_input == 0:
+        const_false = True
+      if first_input == 1 or second_input == 1:
+        const_true = True
+      and_tuple = tuple([and_gate_name,first_input,second_input])
       and_gates.append(and_tuple)
-  if len(const_equals) > 0:
-    raise Error('CONST IN AIG' + str(aig_filename))
+
+  if const_false == True or const_true == True:
+    if tuple([3, 2]) not in not_gates.keys():
+      not_gates[tuple([3, 2])] = 1
+    and_gates.append(tuple([0,2,3]))
+    if const_true == True:
+      not_gates[tuple([1,0])] = 1
   result = []
   result.append('# testname: ' + str(test_name))
   result.append('#         lines from primary input  gates .......     ' + str(len(inputs_list)))
@@ -231,26 +243,12 @@ def aig2bench(filename):
   for not_gate in not_gates.keys():
     not_gate_outp = not_gate[0]
     not_gate_inp = not_gate[1]
-    if len(const_equals) > 0:
-      for eq in const_equals:
-        if not_gate_outp == eq[0]:
-          not_gate_outp = eq[1]
-        elif not_gate_inp == eq[0]:
-          not_gate_inp = eq[1]
     not_line = 'G' + str(not_gate_outp) + 'gat = not(G' + str(not_gate_inp) + 'gat)'
     lines.append((not_line,not_gate))
   for and_gate in and_gates:
     and_gate_outp = and_gate[0]
     and_gate_inp1 = and_gate[1]
     and_gate_inp2 = and_gate[2]
-    if len(const_equals) > 0:
-      for eq in const_equals:
-        if and_gate_outp == eq[0]:
-          and_gate_outp = eq[1]
-        elif and_gate_inp1 == eq[0]:
-          and_gate_inp1 = eq[1]
-        elif and_gate_inp2 == eq[0]:
-          and_gate_inp2 = eq[1]       
     and_line = 'G' + str(and_gate_outp) + 'gat = and(G' + str(and_gate_inp1) + 'gat, G' + str(and_gate_inp2) + 'gat)'
     lines.append((and_line,and_gate))
   lines.sort(key = lambda x: int(max(x[1])))
@@ -432,7 +430,7 @@ if __name__ == '__main__':
 
   # Кодируем первую схему в кнф
   clauses_list = encode_gates(bench, vars_dict)
-  print(outputs_names)
+  #print(outputs_names)
 
   if [x[1] for x in outputs_names] != list(range(max_var - len(outputs_names) + 1, max_var + 1)):
     output_equiv_clauses, max_var = encode_output_equiv(max_var, outputs_names)
@@ -471,9 +469,3 @@ if __name__ == '__main__':
   #   print('s', answer, file = f)
   #   print('v', *model, '0', sep = ' ', file = f)
   # print('CNF was written to', LECfilename)
-
-
-
-
-
-

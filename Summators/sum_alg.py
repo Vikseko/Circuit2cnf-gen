@@ -45,7 +45,7 @@ if __name__ == '__main__':
 		print('    result = A + B;', file=f)
 		print('}', file=f)
 
-	taparams = ['../Apps/transalg']
+	taparams = ['../Apps/transalg_for_mults_and_sums']
 	taparams.extend(['-i', 'sum_.alg'])
 	taparams.extend(['-f', 'aig'])
 	taparams.extend(['-a', t])

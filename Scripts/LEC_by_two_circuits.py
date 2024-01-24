@@ -145,7 +145,15 @@ def encode_AND_gate(line, var_map, circuit_flag = False):
     var_outp = var_map[gate_outp]
     var_input1 = var_map[gate_input1]
     var_input2 = var_map[gate_input2]
-  clauses.extend([[var_outp, -var_input1, -var_input2], [-var_outp, var_input1], [-var_outp, var_input2]])
+  clause1 = [var_outp, -var_input1, -var_input2]
+  clause2 = [-var_outp, var_input1]
+  clause3 = [-var_outp, var_input2]
+  if len(clause1) == len(set([abs(x) for x in clause1])):
+    clauses.append(clause1)
+  if len(clause2) == len(set([abs(x) for x in clause2])):
+    clauses.append(clause2)
+  if len(clause3) == len(set([abs(x) for x in clause3])):
+    clauses.append(clause3)
   return clauses
 
 # Функция кодирования NOT гейта в КНФ
@@ -517,8 +525,3 @@ if __name__ == '__main__':
   if namespace.split_miter_flag == True:
     print('CNFs with separate miter:')
     make_separate_miter_cnfs(cnf_first_list, cnf_second_list, miter_list, vars_miter, LECfilename, inputs_names1)
-
-
-
-
-
