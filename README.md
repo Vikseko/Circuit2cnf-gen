@@ -24,15 +24,15 @@ Binary file for transalg, that supports selecting an addition and multiplication
 
 For multipliers:
 
-> ./create_tests_mults.sh *first_number_size* *first_number_size*
+> ./create_tests_mults.sh *first_number_size* *second_number_size*
 
 For sortings:
 
-> ./create_tests_sorts.sh *number_of_numbers* *number_size*
+> ./create_tests_sorts.sh *number_of_numbers* *single_number_size*
 
 For summators:
 
-> ./create_tests_sums.sh *first_number_size* *first_number_size*
+> ./create_tests_sums.sh *first_number_size* *second_number_size*
 
 This scripts creates aags, aigs, inversion CNFs and LEC CNFs for all considered algorithms of chosen class of problems.
 
