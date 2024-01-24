@@ -1,5 +1,20 @@
 # Circuit2cnf-gen
-CNF generator encoding LEC and inversion problems (for multipliers and summators by now).
+CNF generator encoding LEC and inversion problems (for multipliers, summators and sortings by now).
+
+Supported multiplication algorithms:
+1. Column;
+2. Dadda algorithm;
+3. Karatsuba decomposition;
+4. Wallace tree.
+
+Supported addition algorithms:
+1. Simple;
+2. LogHeight.
+
+Supported sorting algorithms:
+1. Bubble;
+2. Pancake;
+3. Selection.
 
 CNF generation follows one of two schemes:
 1. TA-program -> aag/aig -> CNF for inversion problem (with output corresponding to random input);
@@ -8,13 +23,13 @@ CNF generation follows one of two schemes:
 
 ## Requirements:
 ### Python packages:
-1. toposort from https://pypi.org/project/toposort/
+1. toposort from https://pypi.org/project/toposort/.
 
 ### Additional used apps:
-1. Aigtoaig from https://github.com/arminbiere/aiger
-2. Transalg from https://gitlab.com/transalg/transalg/-/tree/develop?ref_type=heads
-3. A version of transalg that supports selecting an addition and multiplication algorithm from https://gitlab.com/transalg/transalg/-/tree/cmake?ref_type=heads
-4. SAT solver kissat from https://github.com/arminbiere/kissat
+1. Aigtoaig from https://github.com/arminbiere/aiger;
+2. Transalg from https://gitlab.com/transalg/transalg/-/tree/develop?ref_type=heads;
+3. A version of transalg that supports selecting an addition and multiplication algorithm from https://gitlab.com/transalg/transalg/-/tree/cmake?ref_type=heads;
+4. SAT solver kissat from https://github.com/arminbiere/kissat.
 
 All binaries should be located in the ./Apps/ folder.
 Binary file for transalg, that supports selecting an addition and multiplication algorithm, must be named as "transalg_for_mults_and_sums".
