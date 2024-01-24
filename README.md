@@ -21,9 +21,16 @@ Binary file for transalg, that supports selecting an addition and multiplication
 
 ## Usage
 ### Basic usage:
+
+For multipliers:
+
 > ./create_tests_mults.sh *first_number_size* *first_number_size*
 
+For sortings:
+
 > ./create_tests_sorts.sh *number_of_numbers* *number_size*
+
+For summators:
 
 > ./create_tests_sums.sh *first_number_size* *first_number_size*
 
