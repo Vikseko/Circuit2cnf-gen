@@ -17,19 +17,21 @@ CNF generation follows one of two schemes:
 4. SAT solver kissat from https://github.com/arminbiere/kissat
 
 All binaries should be located in the ./Apps/ folder.
-Binary file for transalg for mults and sums support must be named as "transalg_for_mults_and_sums".
+Binary file for transalg, that supports selecting an addition and multiplication algorithm, must be named as "transalg_for_mults_and_sums".
 
 ## Usage
 ### Basic usage:
 > ./create_tests_mults.sh *first_number_size* *first_number_size*
+
 > ./create_tests_sorts.sh *number_of_numbers* *number_size*
+
 > ./create_tests_sums.sh *first_number_size* *first_number_size*
 
 This scripts creates aags, aigs, inversion CNFs and LEC CNFs for all considered algorithms of chosen class of problems.
 
 Constructed CNFs can be found in *problemdir*/cnfs/ (*problemdir* is "Summators", "Multipliers", "Sortings", "Summators_LEC", "Multipliers_LEC" or "Sortings_LEC").
 
-### For inversion problems
+### For inversion problems only
 
 Inside ./Multipliers/ or ./Summators/ directory:
 
@@ -43,7 +45,7 @@ Inside ./Sortings/:
 
 where N is the number of numbers to sort, M is the size of the single number in bytes.
 
-### For LEC problem
+### For LEC problems only
 
 Inside ./Multipliers_LEC/ or ./Summators_LEC/ directory:
 
