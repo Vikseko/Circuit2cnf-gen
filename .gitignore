@@ -4,6 +4,9 @@
 
 # Каждая строчка — это шаблон, по которому происходит игнорирование
 /**/*.cnf
+/**/*.aig
+/**/*.aag
+/**/*.log
 /Multipliers/aags/*
 /Multipliers/aigs/*
 /Multipliers/cnfs/*

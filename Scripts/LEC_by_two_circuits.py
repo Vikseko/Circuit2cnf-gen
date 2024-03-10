@@ -122,12 +122,13 @@ def parse_bench_to_map(bench_lines,start_var_id,circuit_number):
 def encode_gates(bench_lines, vars_dict):
   clauses = []
   for line in bench_lines:
-    # print(line)
+    # print('\n' + line)
     clauses_ = None
     if 'AND' in line:
       clauses_ = encode_AND_gate(line, vars_dict)
     if clauses_ != None:
       clauses.extend(clauses_)
+      # print(*clauses_, sep='\n')
   return clauses
 
 # Функция кодирования AND гейта в КНФ
@@ -148,13 +149,21 @@ def encode_AND_gate(line, var_map, circuit_flag = False):
   clause1 = [var_outp, -var_input1, -var_input2]
   clause2 = [-var_outp, var_input1]
   clause3 = [-var_outp, var_input2]
-  if len(clause1) == len(set([abs(x) for x in clause1])):
+  if check_clause_for_sat(clause1):
     clauses.append(clause1)
-  if len(clause2) == len(set([abs(x) for x in clause2])):
+  if check_clause_for_sat(clause2):
     clauses.append(clause2)
-  if len(clause3) == len(set([abs(x) for x in clause3])):
+  if check_clause_for_sat(clause3):
     clauses.append(clause3)
   return clauses
+
+
+def check_clause_for_sat(clause):
+  for x in clause:
+    if -x in clause:
+      return False
+  return True
+
 
 # Функция кодирования NOT гейта в КНФ
 def encode_NOT_gate(line, var_map, circuit_flag = False):

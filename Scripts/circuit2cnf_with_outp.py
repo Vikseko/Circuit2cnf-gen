@@ -144,13 +144,20 @@ def encode_AND_gate(line, var_map, circuit_flag = False):
   clause1 = [var_outp, -var_input1, -var_input2]
   clause2 = [-var_outp, var_input1]
   clause3 = [-var_outp, var_input2]
-  if len(clause1) == len(set([abs(x) for x in clause1])):
+  if check_clause_for_sat(clause1):
     clauses.append(clause1)
-  if len(clause2) == len(set([abs(x) for x in clause2])):
+  if check_clause_for_sat(clause2):
     clauses.append(clause2)
-  if len(clause3) == len(set([abs(x) for x in clause3])):
+  if check_clause_for_sat(clause3):
     clauses.append(clause3)
   return clauses
+
+
+def check_clause_for_sat(clause):
+  for x in clause:
+    if -x in clause:
+      return False
+  return True
 
 def solve_CNF_timelim(cnf, timelimit):
   solver = subprocess.run(["./kissat", "--time="+str(timelimit)], capture_output=True, text=True, input = cnf)
