@@ -79,7 +79,14 @@ def ta_insert(n, s, f):
 
 
 def ta_pancake(n, s, f):
+  logsize = 0
+  while True:
+    if pow(2, logsize) >= n:
+      break
+    else:
+      logsize += 1
   print('define nof_numbers '+str(n)+';', file=f)
+  print('define log_size '+str(logsize)+';', file=f)
   print('define number_size '+str(s)+';', file=f)
   print('__in bit data[nof_numbers][number_size];', file=f)
   print('__out bit sorted_data[nof_numbers][number_size];', file=f)
@@ -97,7 +104,7 @@ def ta_pancake(n, s, f):
   print('{', file=f)
   print('    for(int i = nof_numbers - 1; i >= 0; i = i - 1)', file=f)
   print('  {', file=f)
-  print('    bit max[4] = 0;', file=f)
+  print('    bit max[log_size] = 0;', file=f)
   print('    for(int j = 1; j <= i; j = j + 1)', file=f)
   print('    {', file=f)
   print('      for(int d = 0; d <= i; d = d + 1)', file=f)
