@@ -31,6 +31,9 @@ def createParser ():
   parser.add_argument ('-ns', '--namesecond', nargs = '?', default = 'after.bench', help = 'Second circuit file (in bench or AIGER (ASCII) format)')
   parser.add_argument ('-o', '--outputfilename', nargs = '?', default = 'before_vs_after.cnf', help = 'Name for output CNF')
   parser.add_argument ('-smf', '--split_miter_flag', nargs = '?', type = bool, default = False, help = 'Separate LEC making flag')
+  parser.add_argument ('-sv', '--shuffle_vars_flag', nargs = '?', type = int, default = 0)
+  parser.add_argument ('-tsl', '--toposortlayers', nargs = '?', type = int, default = 0)
+  parser.add_argument ('-sp', '--sortvrtpower', nargs = '?', type = int, default = 0)
   return parser
 
 class Error(Exception):
@@ -313,7 +316,19 @@ def aig2bench(filename):
   result += lines
   return result
 
-def make_header_and_comments(current_var_id, vars_miter, cnf_first_list, cnf_second_list, miter_list, inputs_names1, vars_dict1, outputs_names1, inputs_names2, vars_dict2, outputs_names2):
+def make_header_and_comments(current_var_id, 
+                             vars_miter, 
+                             cnf_first_list, 
+                             cnf_second_list, 
+                             miter_list, 
+                             inputs_names1, 
+                             vars_dict1, 
+                             outputs_names1, 
+                             inputs_names2, 
+                             vars_dict2, 
+                             outputs_names2,
+                             layers_vars, 
+                             vars_sorted_wrt_power):
   header = 'p cnf ' + str(current_var_id + len(vars_miter) - 1) + ' ' + str(len(cnf_first_list)+len(cnf_second_list)+len(miter_list))
   comment_inputs = 'c inputs: ' + ' '.join([str(x[1]) for x in inputs_names1])
   first_circuit_vars = [x for x in vars_dict1.values() if x not in [x[1] for x in inputs_names1] and x > 0]
@@ -323,8 +338,13 @@ def make_header_and_comments(current_var_id, vars_miter, cnf_first_list, cnf_sec
   comment_vars_second = 'c variables for gates in second scheme: ' + str(min(second_circuit_vars)) + ' ... ' +str(max(second_circuit_vars))
   comment_outputs_second = 'c outputs second scheme: ' + ' '.join([str(x[1]) for x in outputs_names2])
   comment_miter_vars = 'c miter variables: ' + ' '.join(list(map(str,vars_miter)))
-  comment_layers = make_layers_comment(layers_vars)
-  comments = [comment_inputs, comment_vars_first, comment_outputs_first, comment_vars_second, comment_outputs_second, comment_miter_vars, comment_layers]
+  comments = [comment_inputs, comment_vars_first, comment_outputs_first, comment_vars_second, comment_outputs_second, comment_miter_vars]
+  if vars_sorted_wrt_power:
+    comment_vars_power = 'c vars sorted wrt power: ' + ' '.join([str(x) for x in vars_sorted_wrt_power])
+    comments.append(comment_vars_power)
+  if layers_vars:
+    comment_layers = make_layers_comment(layers_vars)
+    comments.append(comment_layers)
   return header, comments
 
 def make_layers_comment(layers_vars):
@@ -454,6 +474,72 @@ def get_toposort_layers(bench1, var_map1, bench2, var_map2, miter_dict):
   #pprint.pprint(vars_layers)
   vars_layers_list = list(toposort(vars_layers))
   return vars_layers_list
+
+
+def check_gates_power(bench, vars_dict):
+  gates_power = []
+  for gate in vars_dict.keys():
+    cur_var = vars_dict[gate]
+    gate_power = check_one_gate_power(bench, gate)
+    gates_power.append([gate, cur_var, gate_power])
+    #print('Gate:', gate, ' var:', cur_var, ' power:', gate_power)
+  gates_power.sort(reverse = True, key = lambda x: (x[2], x[0]))
+  return gates_power
+
+def check_one_gate_power(bench, gate):
+  gate_power = size_of_shadow(bench, gate) + size_of_cone(bench, gate)
+  return gate_power
+
+def size_of_shadow(bench, gate):
+  gate_name = 'G' + str(gate) + 'gat'
+  used_gates = set([gate_name])
+  for line in bench:
+    if line[0] == 'G':
+      gate_outp = line.split()[0]
+      #neg_gate_outp = 'G' + str(int(gate_outp[1:-3]) + 1) + 'gat'
+      if 'and' in line:
+        gate_input1 = line.split('(')[1].split(',')[0]
+        gate_input2 = line.split()[3][:-1]
+        if gate_input1 in used_gates or gate_input2 in used_gates:
+          used_gates.add(gate_outp)
+        #print('Try to find gate', gate_name, 'among', gate_outp, gate_input1, gate_input2)
+        #if gate_name in [gate_outp, gate_input1, gate_input2]:
+          #print('WTF, why didnt find, here it is')
+      elif 'not' in line:
+        gate_input1 = line.split('(')[1][:-1]
+        if gate_input1 in used_gates:
+          used_gates.add(gate_outp)
+        #print('Try to find gate', gate_name, 'among', gate_outp, gate_input1)
+        #if gate_name in [gate_outp, gate_input1]:
+          #print('WTF, why didnt find, here it is')
+  size_of_shadow = len(used_gates)-1
+  return size_of_shadow
+
+def size_of_cone(bench, gate):
+  gate_name = 'G' + str(gate) + 'gat'
+  used_gates = set([gate_name])
+  for line in reversed(bench):
+    if line[0] == 'G':
+      gate_outp = line.split()[0]
+      #neg_gate_outp = 'G' + str(int(gate_outp[1:-3]) + 1) + 'gat'
+      if 'and' in line:
+        gate_input1 = line.split('(')[1].split(',')[0]
+        gate_input2 = line.split()[3][:-1]
+        if gate_outp in used_gates or gate_input2 in used_gates:
+          used_gates.add(gate_input1)
+          used_gates.add(gate_input2)
+      elif 'not' in line:
+        gate_input1 = line.split('(')[1][:-1]
+        if gate_outp in used_gates:
+          used_gates.add(gate_input1)
+  size_of_cone = len(used_gates)-1
+  return size_of_cone
+
+def uniqifier_list_f7(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
 ######################################################################################################
 ##-----------------------------------------------MAIN-----------------------------------------------##
 ######################################################################################################
@@ -467,6 +553,9 @@ if __name__ == '__main__':
   circuit1_filename = namespace.namefirst
   circuit2_filename = namespace.namesecond
   LECfilename = namespace.outputfilename
+  shuffle_vars_flag = namespace.shuffle_vars_flag
+  toposort_flag = namespace.toposortlayers
+  power_flag = namespace.sortvrtpower
 
   if (circuit1_filename.endswith('.aig') == True) or (circuit1_filename.endswith('.aag') == True):
     bench1 = aig2bench(circuit1_filename)
@@ -513,14 +602,26 @@ if __name__ == '__main__':
   # создаем майтер
   miter_list, vars_miter, miter_dict = encode_miter(outputs_names1, outputs_names2, current_var_id)
 
-  # перемешаиваем номера переменных если нужно
-  #shuffle_var_names(cnf_first_list, cnf_second_list, miter_list, nof_vars_second_cnf, nof_inputs1, vars_miter)
 
-  # создаем список слоёв с переменными (топосорт схемы)
-  layers_vars = get_toposort_layers(bench1, vars_dict1, bench2, vars_dict2, miter_dict)
+  # перемешаиваем номера переменных если нужно
+  if shuffle_vars_flag == 1:
+    shuffle_var_names(clauses_list, max_var, inputs_names, outputs_names)
+
+  if toposort_flag == 1:
+    # создаем список слоёв с переменными (топосорт схемы)
+    layers_vars = get_toposort_layers(bench, vars_dict)
+  else:
+    layers_vars = False
+
+  if power_flag == 1:
+    # ранжируем гейты по их влиянию
+    gates_sorted_wrt_power = check_gates_power(bench, vars_dict)
+    vars_sorted_wrt_power = uniqifier_list_f7([abs(x[1]) for x in gates_sorted_wrt_power])
+  else:
+    vars_sorted_wrt_power = False
 
   # делаем заготовки для комментариев и хедера в DIMACS
-  header, comments = make_header_and_comments(current_var_id, vars_miter, cnf_first_list, cnf_second_list, miter_list, inputs_names1, vars_dict1, outputs_names1, inputs_names2, vars_dict2, outputs_names2)
+  header, comments = make_header_and_comments(current_var_id, vars_miter, cnf_first_list, cnf_second_list, miter_list, inputs_names1, vars_dict1, outputs_names1, inputs_names2, vars_dict2, outputs_names2, layers_vars, vars_sorted_wrt_power)
 
   # Переводим дизъюнкты из списков в DIMACS
   dimacs_cnf_first = list_to_clauses(cnf_first_list)

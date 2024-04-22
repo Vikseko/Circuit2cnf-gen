@@ -29,6 +29,8 @@ def createParser ():
   parser.add_argument ('-n', '--namecircuit', nargs = '?', default = 'test.bench', help = 'Circuit file (in bench or AIGER (ASCII) format)')
   parser.add_argument ('-o', '--outputfilename', nargs = '?', default = 'test.cnf', help = 'Name for output CNF')
   parser.add_argument ('-sv', '--shuffle_vars_flag', nargs = '?', type = int, default = 0)
+  parser.add_argument ('-tsl', '--toposortlayers', nargs = '?', type = int, default = 0)
+  parser.add_argument ('-sp', '--sortvrtpower', nargs = '?', type = int, default = 0)
   return parser
 
 class Error(Exception):
@@ -298,7 +300,14 @@ def shuffle_var_names(clauses_list, max_var, inputs_names, outputs_names):
     #print(pair)
     pair[1] = shuffle_dict[abs(pair[1])]
 
-def make_header_and_comments(len_clauses_list, max_var, inputs_names, vars_dict, outputs_names, random_input, layers_vars):
+def make_header_and_comments(len_clauses_list, 
+                             max_var, 
+                             inputs_names, 
+                             vars_dict, 
+                             outputs_names, 
+                             random_input, 
+                             layers_vars, 
+                             vars_sorted_wrt_power):
   header = 'p cnf ' + str(max_var) + ' ' + str(len_clauses_list)
   comment_inputs = 'c inputs: ' + ' '.join([str(x[1]) for x in inputs_names])
   circuit_vars = [x for x in vars_dict.values() if x not in [x[1] for x in inputs_names] and x > 0]
@@ -306,7 +315,13 @@ def make_header_and_comments(len_clauses_list, max_var, inputs_names, vars_dict,
   comment_outputs = 'c outputs: ' + ' '.join([str(x[1]) for x in outputs_names])
   comment_rand_inp = 'c random input: ' + ' '.join([str(x[0]) for x in random_input])
   comment_layers = make_layers_comment(layers_vars)
-  comments = [comment_inputs, comment_vars, comment_outputs, comment_rand_inp, comment_layers]
+  comments = [comment_inputs, comment_vars, comment_outputs, comment_rand_inp]
+  if vars_sorted_wrt_power:
+    comment_vars_power = 'c vars sorted wrt power: ' + ' '.join([str(x) for x in vars_sorted_wrt_power])
+    comments.append(comment_vars_power)
+  if layers_vars:
+    comment_layers = make_layers_comment(layers_vars)
+    comments.append(comment_layers)
   return header, comments
 
 def make_layers_comment(layers_vars):
@@ -403,6 +418,72 @@ def flatten(l):
 
 def get_output_from_model(model, outp_vars):
   return [[x] for x in model if abs(x) in outp_vars]
+
+
+def check_gates_power(bench, vars_dict):
+  gates_power = []
+  for gate in vars_dict.keys():
+    cur_var = vars_dict[gate]
+    gate_power = check_one_gate_power(bench, gate)
+    gates_power.append([gate, cur_var, gate_power])
+    #print('Gate:', gate, ' var:', cur_var, ' power:', gate_power)
+  gates_power.sort(reverse = True, key = lambda x: (x[2], x[0]))
+  return gates_power
+
+def check_one_gate_power(bench, gate):
+  gate_power = size_of_shadow(bench, gate) + size_of_cone(bench, gate)
+  return gate_power
+
+def size_of_shadow(bench, gate):
+  gate_name = 'G' + str(gate) + 'gat'
+  used_gates = set([gate_name])
+  for line in bench:
+    if line[0] == 'G':
+      gate_outp = line.split()[0]
+      #neg_gate_outp = 'G' + str(int(gate_outp[1:-3]) + 1) + 'gat'
+      if 'and' in line:
+        gate_input1 = line.split('(')[1].split(',')[0]
+        gate_input2 = line.split()[3][:-1]
+        if gate_input1 in used_gates or gate_input2 in used_gates:
+          used_gates.add(gate_outp)
+        #print('Try to find gate', gate_name, 'among', gate_outp, gate_input1, gate_input2)
+        #if gate_name in [gate_outp, gate_input1, gate_input2]:
+          #print('WTF, why didnt find, here it is')
+      elif 'not' in line:
+        gate_input1 = line.split('(')[1][:-1]
+        if gate_input1 in used_gates:
+          used_gates.add(gate_outp)
+        #print('Try to find gate', gate_name, 'among', gate_outp, gate_input1)
+        #if gate_name in [gate_outp, gate_input1]:
+          #print('WTF, why didnt find, here it is')
+  size_of_shadow = len(used_gates)-1
+  return size_of_shadow
+
+def size_of_cone(bench, gate):
+  gate_name = 'G' + str(gate) + 'gat'
+  used_gates = set([gate_name])
+  for line in reversed(bench):
+    if line[0] == 'G':
+      gate_outp = line.split()[0]
+      #neg_gate_outp = 'G' + str(int(gate_outp[1:-3]) + 1) + 'gat'
+      if 'and' in line:
+        gate_input1 = line.split('(')[1].split(',')[0]
+        gate_input2 = line.split()[3][:-1]
+        if gate_outp in used_gates or gate_input2 in used_gates:
+          used_gates.add(gate_input1)
+          used_gates.add(gate_input2)
+      elif 'not' in line:
+        gate_input1 = line.split('(')[1][:-1]
+        if gate_outp in used_gates:
+          used_gates.add(gate_input1)
+  size_of_cone = len(used_gates)-1
+  return size_of_cone
+
+def uniqifier_list_f7(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
 ######################################################################################################
 ##-----------------------------------------------MAIN-----------------------------------------------##
 ######################################################################################################
@@ -447,9 +528,18 @@ if __name__ == '__main__':
   if shuffle_vars_flag == 1:
     shuffle_var_names(clauses_list, max_var, inputs_names, outputs_names)
 
-  #print(outputs_names)
-  # создаем список слоёв с переменными (топосорт схемы)
-  layers_vars = get_toposort_layers(bench, vars_dict)
+  if toposort_flag == 1:
+    # создаем список слоёв с переменными (топосорт схемы)
+    layers_vars = get_toposort_layers(bench, vars_dict)
+  else:
+    layers_vars = False
+
+  if power_flag == 1:
+    # ранжируем гейты по их влиянию
+    gates_sorted_wrt_power = check_gates_power(bench, vars_dict)
+    vars_sorted_wrt_power = uniqifier_list_f7([abs(x[1]) for x in gates_sorted_wrt_power])
+  else:
+    vars_sorted_wrt_power = False
 
 
   create_random_inp = [[rand_sign(x[1])] for x in inputs_names]
@@ -466,7 +556,7 @@ if __name__ == '__main__':
   dimacs_cnf = list_to_clauses(clauses_list)
 
   # делаем заготовки для комментариев и хедера в DIMACS
-  header, comments = make_header_and_comments(len(clauses_list), max_var, inputs_names, vars_dict, outputs_names, create_random_inp, layers_vars)
+  header, comments = make_header_and_comments(len(clauses_list), max_var, inputs_names, vars_dict, outputs_names, create_random_inp, layers_vars, vars_sorted_wrt_power)
 
   # Записываем выходную КНФ
   write_out_CNF(LECfilename, header, comments, dimacs_cnf)
